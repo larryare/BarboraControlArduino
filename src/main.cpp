@@ -1,7 +1,7 @@
 #include <FirebaseArduino.h>
 #include <NTPClient.h>
 #include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h> //idk platform.io requires this
+#include <ESP8266HTTPClient.h>
 #include <WiFiUdp.h>
 
 //dht
