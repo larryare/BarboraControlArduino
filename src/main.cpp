@@ -1,14 +1,3 @@
-// *****************************Changelog*************************************
-// v0.0.8:
-// + Optimized DB and stuff
-// + Optimized DHT sensor upload to Firebase
-// + Added to Github
-// *******************************TODO****************************************
-// ? append Temp and humidity readings to Firebase
-// ? Temp and humidity graphs
-// ? Optimize NTP client
-// ? Implement Remote Restart
-
 #include <FirebaseArduino.h>
 #include <NTPClient.h>
 #include <ESP8266WiFi.h>
