@@ -3,10 +3,10 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiUdp.h>
-
-//dht
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
+
+#include "credentials.h"
 
 #define DHTPIN D7
 #define DHTTYPE DHT22
@@ -14,20 +14,6 @@
 DHT dht(DHTPIN, DHTTYPE);
 double previousTemperature = 0.0;
 double previousHumidity = 0.0;
-
-//define firebase
-#define FIREBASE_HOST "barbora-f1111.firebaseio.com"
-#define FIREBASE_AUTH "7t7kFonYY4bVbZlFfaW9LNQibADYPEmRg3FIDbbj"
-#define DB_PATH "/control/"
-
-#define BASKING_TIME "/control/baskingTime"
-#define IR_STATUS "/control/irStatus"
-#define UV_STATUS "/control/uvStatus"
-#define START_MINUTE "/control/startMinute"
-#define START_HOUR "/control/startHour"
-#define OVERRIDE "/control/overRide"
-#define TEMPERATURE "/temperature"
-#define HUMIDITY "/humidity"
 
 boolean overRide = false;
 boolean uvStatus = false;
@@ -72,20 +58,17 @@ void setup()
 
   Firebase.stream(DB_PATH);
 
-  //dht
   dht.begin();
 }
 
 void loop()
 {
-  //declare timeClient ints
   timeClient.update();
   int clientHour = timeClient.getHours();
   int clientMinute = timeClient.getMinutes();
   Serial.print(F("Current system Time is: "));
   Serial.println(timeClient.getFormattedTime());
 
-  //Firebase stuff
   if (Firebase.failed())
   {
     Serial.println("streaming error");
@@ -130,7 +113,6 @@ void loop()
       endTime = endTime - 24;
     }
 
-    //tominutes
     int startTimeMinutes = startHour * 60 + startMinute;
     int endTimeMinutes = startHour * 60 + startMinute + baskingTime * 60;
     int currentTimeMinutes = clientHour * 60 + clientMinute;
@@ -210,7 +192,5 @@ void loop()
       Firebase.setFloat(TEMPERATURE, t);
     }
   }
-
-  //refresh every 1 second
   delay(1000);
 }
