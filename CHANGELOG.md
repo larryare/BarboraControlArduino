@@ -3,8 +3,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-## [Unreleased]
-## 0.1.9 - 2019-03-19
+## Unreleased
+## [0.1.9] - 2019-03-19
 ### Added
 - [CHANGELOG.md]
 - [README.md]
@@ -44,5 +44,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [CHANGELOG.md]: CHANGELOG.md
 [README.md]: README.md
-[Unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/olivierlacan/keep-a-changelog/compare/v0.3.0...v1.0.0
+[0.1.9]: https://github.com/larryare/BarboraControlArduino/tree/0.1.9
