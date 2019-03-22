@@ -18,10 +18,14 @@ double previousHumidity = 0.0;
 boolean overRide = false;
 boolean uvStatus = false;
 boolean irStatus = false;
+
 int baskingTime;
 int startHour;
 int startMinute;
 int endTime;
+
+int startTimeMinutes;
+int endTimeMinutes;
 
 const int uvPin = D5;
 const int irPin = D6;
@@ -36,14 +40,12 @@ void setup()
 {
   pinMode(uvPin, OUTPUT);
   pinMode(irPin, OUTPUT);
-  Serial.begin(9600);
 
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
-    Serial.print(".");
   }
 
   timeClient.begin();
@@ -56,6 +58,9 @@ void setup()
   startHour = Firebase.getInt(START_HOUR);
   startMinute = Firebase.getInt(START_MINUTE);
 
+  startTimeMinutes = startHour * 60 + startMinute;
+  endTimeMinutes = startHour * 60 + startMinute + baskingTime * 60;
+
   Firebase.stream(DB_PATH);
 
   dht.begin();
@@ -66,13 +71,10 @@ void loop()
   timeClient.update();
   int clientHour = timeClient.getHours();
   int clientMinute = timeClient.getMinutes();
-  Serial.print(F("Current system Time is: "));
-  Serial.println(timeClient.getFormattedTime());
+  int currentTimeMinutes = clientHour * 60 + clientMinute;
 
   if (Firebase.failed())
   {
-    Serial.println("streaming error");
-    Serial.println(Firebase.error());
     delay(1000);
     Firebase.stream(DB_PATH);
     return;
@@ -83,13 +85,9 @@ void loop()
     FirebaseObject event = Firebase.readEvent();
     String eventPath = event.getString("path");
     eventPath.toLowerCase();
-    Serial.println("DB CHANGE DETECTED!");
-    Serial.print("PATH: ");
-    Serial.println(eventPath);
     if (eventPath == "/override")
     {
       overRide = Firebase.getBool(OVERRIDE);
-      Serial.println("OVERRIDE!");
     }
     if (eventPath == "/uvstatus")
     {
@@ -104,54 +102,50 @@ void loop()
       baskingTime = Firebase.getInt(BASKING_TIME);
       startHour = Firebase.getInt(START_HOUR);
       startMinute = Firebase.getInt(START_MINUTE);
-    }
 
-    endTime = startHour + baskingTime;
+      endTime = startHour + baskingTime;
 
-    if (endTime >= 24)
-    {
-      endTime = endTime - 24;
-    }
+      startTimeMinutes = startHour * 60 + startMinute;
+      endTimeMinutes = startHour * 60 + startMinute + baskingTime * 60;
 
-    int startTimeMinutes = startHour * 60 + startMinute;
-    int endTimeMinutes = startHour * 60 + startMinute + baskingTime * 60;
-    int currentTimeMinutes = clientHour * 60 + clientMinute;
-
-    if (!overRide)
-    {
-      if (startTimeMinutes <= currentTimeMinutes && currentTimeMinutes <= endTimeMinutes)
+      if (endTime >= 24)
       {
-        Serial.println("System time is between given values");
-        if (!uvStatus)
-        {
-          Firebase.setBool(UV_STATUS, true);
-          uvStatus = true;
-        }
-        if (!irStatus)
-        {
-          Firebase.setBool(IR_STATUS, true);
-          irStatus = true;
-        }
+        endTime = endTime - 24;
       }
-      else
+    }
+  }
+
+  if (!overRide)
+  {
+    if (startTimeMinutes <= currentTimeMinutes && currentTimeMinutes <= endTimeMinutes)
+    {
+      if (!uvStatus)
       {
-        Serial.println("System time is NOT between given values");
-        if (uvStatus)
-        {
-          Firebase.setBool(UV_STATUS, false);
-          uvStatus = false;
-        }
-        if (irStatus)
-        {
-          Firebase.setBool(IR_STATUS, false);
-          irStatus = false;
-        }
+        Firebase.setBool(UV_STATUS, true);
+        uvStatus = true;
+      }
+      if (!irStatus)
+      {
+        Firebase.setBool(IR_STATUS, true);
+        irStatus = true;
       }
     }
     else
     {
-      Serial.println(F("OverRiden"));
+      if (uvStatus)
+      {
+        Firebase.setBool(UV_STATUS, false);
+        uvStatus = false;
+      }
+      if (irStatus)
+      {
+        Firebase.setBool(IR_STATUS, false);
+        irStatus = false;
+      }
     }
+  }
+  else
+  {
   }
 
   if (uvStatus)
@@ -177,7 +171,6 @@ void loop()
 
   if (isnan(h) || isnan(t))
   {
-    Serial.println(F("Failed to read from DHT sensor!"));
   }
   else
   {
