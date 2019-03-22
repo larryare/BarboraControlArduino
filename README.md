@@ -1,12 +1,12 @@
 # Barbora Control Arduino
 - [Barbora Control Arduino](#barbora-control-arduino)
-  - [[Changelog]](#changelog)
+  - [Changelog](#changelog)
   - [Credentials](#credentials)
     - [Where to put credentials file](#where-to-put-credentials-file)
     - [How to configure credentials file](#how-to-configure-credentials-file)
     - [Temperature and humidity](#temperature-and-humidity)
-## [Changelog]
-
+## Changelog
+[CHANGELOG.md]
 ## Credentials
 ### Where to put credentials file
 Create credentials.h header file inside your project directory
@@ -30,4 +30,4 @@ You can copy and paste this snippet and change the values:
 ### Temperature and humidity
 Use different parent directory for temperature and humidity, because you don't want your get DB values every time temperature or humidity changes. 
 
-[Changelog]: CHANGELOG.md
+[Changelog.md]: CHANGELOG.md
