@@ -18,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [README.md]
 ### Removed
 - changelog from main.cpp
-## Unreleased
 ## 0.1.8 - 2017-03-18
 ### Fixed
 - Uploads temperature and humidity values to DB only if they are different from previous reading
