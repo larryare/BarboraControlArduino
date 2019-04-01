@@ -16,8 +16,8 @@ double previousTemperature = 0.0;
 double previousHumidity = 0.0;
 
 boolean overRide = false;
-boolean uvStatus = false;
-boolean irStatus = false;
+boolean uvStatus;
+boolean irStatus;
 
 int baskingTime;
 int startHour;
@@ -34,10 +34,11 @@ const char *ssid = "Waifas 2.4";
 const char *password = "lsmustud";
 
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 7200, 60000);
+NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 10800, 60000);
 
 void setup()
 {
+  Serial.begin(9600);
   pinMode(uvPin, OUTPUT);
   pinMode(irPin, OUTPUT);
 
@@ -45,6 +46,7 @@ void setup()
 
   while (WiFi.status() != WL_CONNECTED)
   {
+
     delay(500);
   }
 
@@ -57,6 +59,8 @@ void setup()
   baskingTime = Firebase.getInt(BASKING_TIME);
   startHour = Firebase.getInt(START_HOUR);
   startMinute = Firebase.getInt(START_MINUTE);
+  uvStatus = Firebase.getBool(UV_STATUS);
+  irStatus = Firebase.getBool(IR_STATUS);
 
   startTimeMinutes = startHour * 60 + startMinute;
   endTimeMinutes = startHour * 60 + startMinute + baskingTime * 60;
@@ -68,16 +72,29 @@ void setup()
 
 void loop()
 {
+  if (WiFi.status() == WL_DISCONNECTED || WiFi.status() == WL_CONNECTION_LOST) {
+    Serial.print(F("Connection lost, restarting..."));
+    delay(2000);
+    ESP.restart();
+  }
+
   timeClient.update();
+
+Serial.print(F("Current system Time is: "));
+  Serial.println(timeClient.getFormattedTime());
+
   int clientHour = timeClient.getHours();
   int clientMinute = timeClient.getMinutes();
   int currentTimeMinutes = clientHour * 60 + clientMinute;
+  
 
   if (Firebase.failed())
   {
+    Serial.println("streaming error");
+    Serial.println(Firebase.error());
     delay(1000);
     Firebase.stream(DB_PATH);
-    return;
+    ESP.restart();
   }
 
   if (Firebase.available())
@@ -85,6 +102,9 @@ void loop()
     FirebaseObject event = Firebase.readEvent();
     String eventPath = event.getString("path");
     eventPath.toLowerCase();
+    Serial.println("DB CHANGE DETECTED!");
+    Serial.print("PATH: ");
+    Serial.println(eventPath);
     if (eventPath == "/override")
     {
       overRide = Firebase.getBool(OVERRIDE);
@@ -105,13 +125,13 @@ void loop()
 
       endTime = startHour + baskingTime;
 
-      startTimeMinutes = startHour * 60 + startMinute;
-      endTimeMinutes = startHour * 60 + startMinute + baskingTime * 60;
-
       if (endTime >= 24)
       {
         endTime = endTime - 24;
       }
+
+      startTimeMinutes = startHour * 60 + startMinute;
+      endTimeMinutes = endTime * 60 + startMinute;
     }
   }
 
@@ -123,11 +143,13 @@ void loop()
       {
         Firebase.setBool(UV_STATUS, true);
         uvStatus = true;
+        Serial.println(F("UV Status updated to db"));
       }
       if (!irStatus)
       {
         Firebase.setBool(IR_STATUS, true);
         irStatus = true;
+        Serial.println(F("IR Status updated to db"));
       }
     }
     else
@@ -136,16 +158,15 @@ void loop()
       {
         Firebase.setBool(UV_STATUS, false);
         uvStatus = false;
+        Serial.println(F("UV Status updated to db"));
       }
       if (irStatus)
       {
         Firebase.setBool(IR_STATUS, false);
         irStatus = false;
+        Serial.println(F("IR Status updated to db"));
       }
     }
-  }
-  else
-  {
   }
 
   if (uvStatus)
