@@ -15,9 +15,11 @@ DHT dht(DHTPIN, DHTTYPE);
 double previousTemperature = 0.0;
 double previousHumidity = 0.0;
 
+
 boolean overRide = false;
 boolean uvStatus;
 boolean irStatus;
+boolean fanStatus;
 
 int baskingTime;
 int startHour;
@@ -29,9 +31,10 @@ int endTimeMinutes;
 
 const int uvPin = D5;
 const int irPin = D6;
+const int fanPin = D8;
 
-const char *ssid = "Waifas 2.4";
-const char *password = "lsmustud";
+const char *ssid = "Liolekas";
+const char *password = "laurynas123";
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 10800, 60000);
@@ -41,6 +44,12 @@ void setup()
   Serial.begin(9600);
   pinMode(uvPin, OUTPUT);
   pinMode(irPin, OUTPUT);
+  pinMode(fanPin, OUTPUT);
+
+  analogWriteFreq(25000);
+  analogWriteRange(100);
+  analogWrite(fanPin, 30);
+  
 
   WiFi.begin(ssid, password);
 
@@ -61,6 +70,7 @@ void setup()
   startMinute = Firebase.getInt(START_MINUTE);
   uvStatus = Firebase.getBool(UV_STATUS);
   irStatus = Firebase.getBool(IR_STATUS);
+  fanStatus = Firebase.getBool(FAN_STATUS);
 
   startTimeMinutes = startHour * 60 + startMinute;
   endTimeMinutes = startHour * 60 + startMinute + baskingTime * 60;
@@ -92,9 +102,6 @@ Serial.print(F("Current system Time is: "));
   {
     Serial.println("streaming error");
     Serial.println(Firebase.error());
-    delay(1000);
-    Firebase.stream(DB_PATH);
-    ESP.restart();
   }
 
   if (Firebase.available())
@@ -105,6 +112,9 @@ Serial.print(F("Current system Time is: "));
     Serial.println("DB CHANGE DETECTED!");
     Serial.print("PATH: ");
     Serial.println(eventPath);
+    if (eventPath == "/fanstatus") {
+      fanStatus = Firebase.getBool(FAN_STATUS);
+    }
     if (eventPath == "/override")
     {
       overRide = Firebase.getBool(OVERRIDE);
@@ -168,7 +178,12 @@ Serial.print(F("Current system Time is: "));
       }
     }
   }
-
+  if (fanStatus) {
+    analogWrite(fanPin, 30);
+  }
+  else {
+    analogWrite(fanPin, 0);
+  }
   if (uvStatus)
   {
     digitalWrite(uvPin, LOW);
